@@ -78,6 +78,11 @@ web_modules/
 .next
 out
 
+# Generated clients and test artifacts
+src/generated/
+playwright-report/
+test-results/
+
 # Nuxt.js build / generate output
 .nuxt
 dist

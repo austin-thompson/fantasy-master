@@ -5,9 +5,10 @@ football leagues across Sleeper, Yahoo, and ESPN. Its focus is cross-league
 coordination: identifying what needs attention, showing player exposure and
 availability, and reducing repeated checks across provider applications.
 
-> **Current status:** Phase 0A (documentation organization). Application
-> scaffolding and runnable development commands are planned for Phase 0B but do
-> not exist yet.
+> **Current status:** Phase 0B implementation is complete. The application
+> shell, PostgreSQL/Prisma foundation, local and Docker workflows, health
+> endpoints, tests, and CI are available. Docker runtime and persistent-volume
+> verification remain pending on a Docker-capable host.
 
 ## MVP Scope
 
@@ -40,7 +41,7 @@ interface, proprietary projections, native mobile applications, multi-sport
 support, a commissioner suite, public multi-tenant SaaS, microservices,
 Kubernetes, Redis, or GraphQL.
 
-## Planned Technology Stack
+## Technology Stack
 
 - TypeScript in strict mode
 - Next.js App Router on Node.js
@@ -56,85 +57,129 @@ Kubernetes, Redis, or GraphQL.
 
 ```text
 fantasy-master/
-├── context/       Governing product and engineering specifications
-├── .gitignore
-├── LICENSE
-└── README.md
+├── .github/workflows/  Continuous integration
+├── context/            Governing product and engineering specifications
+├── prisma/             Schema, migrations, and seed workflow
+├── public/             Static assets
+├── src/app/            Next.js App Router pages and route handlers
+├── src/lib/            Shared server infrastructure
+├── tests/              Unit and end-to-end tests
+├── docker-compose.yml
+├── Dockerfile
+└── package.json
 ```
 
-The application structure described in the architecture document will be added
-incrementally during approved implementation phases. See the
-[context documentation index](context/README.md) for the governing documents
-and their reading order.
+Domain modules described in the architecture document will be added
+incrementally during their approved phases. See the
+[context documentation index](context/README.md) for governing documents and
+their reading order.
 
 ## Local Development
 
 ### Prerequisites
 
-Phase 0A only requires Git and a Markdown viewer. Phase 0B is planned to require:
-
-- A supported Node.js LTS release
-- pnpm
-- Docker with Docker Compose
-
-Exact supported versions will be recorded when the application is scaffolded.
+- Git
+- Node.js 22.13 or later in the 22.x or 24.x lines
+- pnpm 11.17.0 (the repository pins this through `packageManager`)
+- Docker Engine with Docker Compose v2 for the container workflow
 
 ### Initial Setup
 
-At the current documentation-only stage:
-
 1. Clone the repository.
-2. Read the [context documentation index](context/README.md).
-3. Review the governing specifications in the recommended order.
-
-There are no dependencies to install and no application to start yet.
-
-### Planned pnpm Commands
-
-The following command interface is planned for Phase 0B. These commands are
-**not available yet** and will be updated when backed by package scripts:
+2. Copy `.env.example` to `.env`.
+3. Replace the example database password in both `POSTGRES_PASSWORD` and
+   `DATABASE_URL`. Keep it URL-safe or percent-encode it in `DATABASE_URL`.
+4. Install dependencies and generate the Prisma client:
 
 ```bash
 pnpm install
+pnpm prisma:generate
+```
+
+5. Start PostgreSQL (through Docker Compose or a local installation), apply the
+   migration, seed foundation metadata, and start the app:
+
+```bash
+pnpm prisma:migrate
+pnpm prisma:seed
 pnpm dev
+```
+
+The application is available at `http://localhost:3000`. Liveness is reported
+at `/api/health`; database-backed readiness is reported at `/api/ready`.
+
+### Common Commands
+
+```bash
+pnpm dev              # Start the development server
 pnpm build
 pnpm start
 pnpm lint
+pnpm format:check
 pnpm typecheck
 pnpm test
 pnpm test:e2e
-pnpm prisma:generate
-pnpm prisma:migrate
 ```
 
-### Planned Docker Compose Workflow
+Install the Chromium test runtime once before the first local end-to-end run:
 
-Docker Compose configuration does not exist during Phase 0A. Phase 0B is
-planned to provide:
+```bash
+pnpm exec playwright install chromium
+```
+
+### Docker Compose
 
 ```bash
 docker compose up --build
 docker compose down
 ```
 
-The Compose deployment will bind the application to localhost by default and
-use a named volume for PostgreSQL data. Normal shutdown instructions will not
-delete that volume.
+Compose reads `.env`, builds the production image, runs migrations and the
+idempotent seed, and waits for PostgreSQL readiness. Both ports bind to
+localhost by default. PostgreSQL uses the named volume
+`fantasy_master_postgres_data`, so `docker compose down` and normal container
+restarts preserve data.
 
-### Planned Testing and Database Workflows
+Do not add `--volumes` to the shutdown command unless permanent database
+deletion is intentional.
 
-Linting, type checking, unit/component tests, Playwright smoke tests, and Prisma
-migration workflows will be introduced in Phase 0B. Until their configuration
-and package scripts exist, there are no executable test or database migration
-commands in this repository.
+### Testing
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm test:e2e
+```
+
+The end-to-end command starts its own development server and verifies the login
+placeholder and health endpoint. CI runs frozen installation, Prisma
+generation, linting, type checking, unit tests, and the production build.
+
+### Database Migrations
+
+```bash
+pnpm prisma:validate        # Validate schema and configuration
+pnpm prisma:generate        # Generate the typed client
+pnpm prisma:migrate         # Create/apply migrations during development
+pnpm prisma:migrate:deploy  # Apply committed migrations non-interactively
+pnpm prisma:seed            # Apply idempotent foundation seed data
+```
+
+Commit migration directories with their schema changes. Containers run
+`prisma:migrate:deploy` rather than creating migrations at startup.
 
 ### Environment Configuration
 
-No environment variables are required during Phase 0A. Phase 0B will add a
-checked-in `.env.example` containing non-secret placeholders and Zod-based
-startup validation. Real secrets must remain in ignored local environment files
-or deployment configuration and must never be committed. Provider credentials
-and tokens must remain server-side and must not be exposed to browser code.
+`.env.example` documents all current settings. `DATABASE_URL` is required and
+validated with Zod when server infrastructure loads; `LOG_LEVEL` defaults to
+`info`. Compose also uses `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+`POSTGRES_PORT`, and `APP_PORT`.
+
+Real secrets must remain in ignored `.env` files or deployment configuration
+and must never be committed. Provider credentials and tokens introduced in
+later phases must remain server-side and must not be exposed to browser code.
 
 ## Contributing
 
@@ -150,4 +195,3 @@ submitting a change:
   were actually run.
 - Preserve provider boundaries, user ownership, and the read-only integration
   policy.
-

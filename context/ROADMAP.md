@@ -1,5 +1,14 @@
 # FantasyMaster Roadmap
 
+## Implementation Status
+
+- Phase 0 — Repository and Runtime Foundation: implementation complete as of
+  2026-07-28; Docker runtime and persistence verification pending.
+- Phase 1 — Authentication and User Ownership: not started.
+
+Status notes record delivery progress without changing the scope or exit
+criteria below.
+
 ## Delivery Strategy
 
 Build vertical slices that prove the weekly management loop. Do not complete every database table before exposing usable behavior.

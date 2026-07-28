@@ -5,6 +5,17 @@ specifications for FantasyMaster. They define what the project is building, the
 order in which it should be built, and the boundaries implementations must
 preserve.
 
+## Implementation Status
+
+Phase 0B implementation was completed on 2026-07-28. The project now has pnpm,
+Next.js, Prisma, PostgreSQL, Docker Compose, health-check, test, and CI
+workflows. Docker startup and persistent-volume verification remain pending on
+a Docker-capable host. Phase 1 authentication and user ownership have not
+started.
+
+See the [root README](../README.md) for prerequisites, setup, commands,
+environment configuration, migrations, Docker Compose, and testing.
+
 ## Recommended Reading Order
 
 1. [CONTEXT.md](CONTEXT.md) — product thesis, chosen technology stack, MVP
@@ -65,4 +76,3 @@ spikes or real usage:
 - Which public injury/status sources have acceptable licensing and reliability?
 - What backup and restore procedure should be adopted before the first stable
   release?
-
