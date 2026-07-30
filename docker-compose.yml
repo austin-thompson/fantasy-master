@@ -27,6 +27,8 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fantasy_master}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@database:5432/${POSTGRES_DB:-fantasy_master}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
+      BETTER_AUTH_URL: http://localhost:${APP_PORT:-3000}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       NODE_ENV: production
     ports:

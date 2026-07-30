@@ -2,9 +2,12 @@
 
 ## Implementation Status
 
-- Phase 0 — Repository and Runtime Foundation: implementation complete as of
-  2026-07-28; Docker runtime and persistence verification pending.
-- Phase 1 — Authentication and User Ownership: not started.
+- Phase 0 — Repository and Runtime Foundation: complete; implemented on
+  2026-07-28 and Docker runtime and persistence verified on 2026-07-30.
+- Phase 1 — Authentication and User Ownership: complete as of 2026-07-30.
+- Phase 2 — Canonical Domain and Sleeper Vertical Slice: complete and
+  real-league validated as of 2026-07-30.
+- Phase 3 — Cross-League P0 Product Slice: not started.
 
 Status notes record delivery progress without changing the scope or exit
 criteria below.

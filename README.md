@@ -5,10 +5,11 @@ football leagues across Sleeper, Yahoo, and ESPN. Its focus is cross-league
 coordination: identifying what needs attention, showing player exposure and
 availability, and reducing repeated checks across provider applications.
 
-> **Current status:** Phase 0B implementation is complete. The application
-> shell, PostgreSQL/Prisma foundation, local and Docker workflows, health
-> endpoints, tests, and CI are available. Docker runtime and persistent-volume
-> verification remain pending on a Docker-capable host.
+> **Current status:** Phase 2's canonical domain and Sleeper vertical slice are
+> complete. The application supports local authentication, read-only Sleeper
+> account lookup, NFL league import, normalized teams and rosters, matchup and
+> transaction import, manual synchronization, freshness, and sync history.
+> Phase 3 has not started.
 
 ## MVP Scope
 
@@ -89,6 +90,7 @@ their reading order.
 2. Copy `.env.example` to `.env`.
 3. Replace the example database password in both `POSTGRES_PASSWORD` and
    `DATABASE_URL`. Keep it URL-safe or percent-encode it in `DATABASE_URL`.
+   Replace `BETTER_AUTH_SECRET` with at least 32 random characters.
 4. Install dependencies and generate the Prisma client:
 
 ```bash
@@ -107,6 +109,10 @@ pnpm dev
 
 The application is available at `http://localhost:3000`. Liveness is reported
 at `/api/health`; database-backed readiness is reported at `/api/ready`.
+On an empty database, the application redirects to `/setup` to create the sole
+local administrator. Public registration closes after that account is created.
+The internal non-routable email attached to the credential account is derived
+from the username and is not used for email delivery.
 
 ### Common Commands
 
@@ -118,6 +124,7 @@ pnpm lint
 pnpm format:check
 pnpm typecheck
 pnpm test
+pnpm test:integration
 pnpm test:e2e
 ```
 
@@ -143,19 +150,34 @@ restarts preserve data.
 Do not add `--volumes` to the shutdown command unless permanent database
 deletion is intentional.
 
+### Sleeper Import
+
+After signing in, enter a public Sleeper username and NFL season on the
+dashboard. FantasyMaster discovers leagues and imports their current canonical
+state. No Sleeper password or API token is required. Use **Sync now** to refresh
+the connection; recent runs and failures remain visible while the last valid
+league state is retained.
+
+Pre-draft leagues can legitimately have empty rosters, matchups, and
+transactions. Synchronize again after the league drafts.
+
 ### Testing
 
 ```bash
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:integration
 pnpm build
 pnpm test:e2e
 ```
 
-The end-to-end command starts its own development server and verifies the login
-placeholder and health endpoint. CI runs frozen installation, Prisma
-generation, linting, type checking, unit tests, and the production build.
+Integration tests delete authentication records and therefore refuse to run
+unless `DATABASE_URL` names a dedicated database containing `_test`. The
+end-to-end command starts its own development server and verifies anonymous
+route protection and the health endpoint. CI provisions a dedicated PostgreSQL
+service and runs migrations, unit tests, integration tests, and the production
+build.
 
 ### Database Migrations
 
@@ -172,10 +194,12 @@ Commit migration directories with their schema changes. Containers run
 
 ### Environment Configuration
 
-`.env.example` documents all current settings. `DATABASE_URL` is required and
-validated with Zod when server infrastructure loads; `LOG_LEVEL` defaults to
-`info`. Compose also uses `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
-`POSTGRES_PORT`, and `APP_PORT`.
+`.env.example` documents all current settings. `DATABASE_URL`,
+`BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` are required and validated with Zod
+when server infrastructure loads; `LOG_LEVEL` defaults to `info`. The auth URL
+must match the origin used to access the application. Compose also uses
+`POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT`, and
+`APP_PORT`.
 
 Real secrets must remain in ignored `.env` files or deployment configuration
 and must never be committed. Provider credentials and tokens introduced in

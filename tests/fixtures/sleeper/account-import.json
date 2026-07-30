@@ -1,0 +1,159 @@
+{
+  "user": {
+    "user_id": "user-100",
+    "username": "fixture_manager",
+    "display_name": "Fixture Manager",
+    "avatar": null
+  },
+  "state": {
+    "week": 3,
+    "leg": 3,
+    "season": "2026",
+    "league_season": "2026"
+  },
+  "leagues": [
+    {
+      "league_id": "league-200",
+      "name": "Sanitized Test League",
+      "sport": "nfl",
+      "season": "2026",
+      "season_type": "regular",
+      "status": "in_season",
+      "total_rosters": 2,
+      "avatar": null,
+      "roster_positions": ["QB", "RB", "BN"],
+      "scoring_settings": { "rec": 1 },
+      "settings": {
+        "waiver_type": 2,
+        "waiver_budget": 100,
+        "playoff_week_start": 15,
+        "type": 0
+      }
+    }
+  ],
+  "users": [
+    {
+      "user_id": "user-100",
+      "username": "fixture_manager",
+      "display_name": "Fixture Manager",
+      "avatar": null,
+      "metadata": { "team_name": "Test Comets" }
+    },
+    {
+      "user_id": "user-101",
+      "username": "fixture_rival",
+      "display_name": "Fixture Rival",
+      "avatar": null,
+      "metadata": { "team_name": "Test Meteors" }
+    }
+  ],
+  "rosters": [
+    {
+      "roster_id": 1,
+      "owner_id": "user-100",
+      "players": ["player-qb", "player-rb", "player-bn"],
+      "starters": ["player-qb", "player-rb"],
+      "reserve": [],
+      "settings": {
+        "wins": 2,
+        "losses": 1,
+        "ties": 0,
+        "fpts": 321,
+        "fpts_decimal": 45,
+        "waiver_position": 4,
+        "waiver_budget_used": 12
+      }
+    },
+    {
+      "roster_id": 2,
+      "owner_id": "user-101",
+      "players": ["player-rival"],
+      "starters": ["player-rival"],
+      "reserve": [],
+      "settings": { "wins": 1, "losses": 2, "ties": 0, "fpts": 280 }
+    }
+  ],
+  "matchups": [
+    {
+      "roster_id": 1,
+      "matchup_id": 1,
+      "points": 42.5,
+      "custom_points": null,
+      "players": ["player-qb", "player-rb", "player-bn"],
+      "starters": ["player-qb", "player-rb"]
+    },
+    {
+      "roster_id": 2,
+      "matchup_id": 1,
+      "points": 39.2,
+      "custom_points": null,
+      "players": ["player-rival"],
+      "starters": ["player-rival"]
+    }
+  ],
+  "transactions": [
+    {
+      "transaction_id": "transaction-300",
+      "type": "free_agent",
+      "status": "complete",
+      "leg": 3,
+      "roster_ids": [1],
+      "adds": { "player-bn": 1 },
+      "drops": {},
+      "created": 1780000000000,
+      "status_updated": 1780000000000,
+      "settings": null,
+      "metadata": null,
+      "draft_picks": [],
+      "waiver_budget": []
+    }
+  ],
+  "players": {
+    "player-qb": {
+      "player_id": "player-qb",
+      "first_name": "Quinn",
+      "last_name": "Example",
+      "full_name": "Quinn Example",
+      "position": "QB",
+      "team": "TST",
+      "status": "Active",
+      "injury_status": null,
+      "fantasy_positions": ["QB"],
+      "espn_id": "espn-qb",
+      "yahoo_id": "yahoo-qb"
+    },
+    "player-rb": {
+      "player_id": "player-rb",
+      "first_name": "Riley",
+      "last_name": "Example",
+      "full_name": "Riley Example",
+      "position": "RB",
+      "team": "TST",
+      "status": "Active",
+      "injury_status": null,
+      "fantasy_positions": ["RB"]
+    },
+    "player-bn": {
+      "player_id": "player-bn",
+      "first_name": "Bailey",
+      "last_name": "Example",
+      "full_name": "Bailey Example",
+      "position": "WR",
+      "team": "TST",
+      "status": "Active",
+      "injury_status": null,
+      "fantasy_positions": ["WR"]
+    },
+    "player-rival": {
+      "player_id": "player-rival",
+      "first_name": "River",
+      "last_name": "Example",
+      "full_name": "River Example",
+      "position": "QB",
+      "team": "OPP",
+      "status": "Active",
+      "injury_status": null,
+      "fantasy_positions": ["QB"]
+    }
+  }
+}

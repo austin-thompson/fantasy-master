@@ -7,11 +7,13 @@ preserve.
 
 ## Implementation Status
 
-Phase 0B implementation was completed on 2026-07-28. The project now has pnpm,
-Next.js, Prisma, PostgreSQL, Docker Compose, health-check, test, and CI
-workflows. Docker startup and persistent-volume verification remain pending on
-a Docker-capable host. Phase 1 authentication and user ownership have not
-started.
+Phase 0B implementation was completed on 2026-07-28. Phase 1 authentication and
+user ownership were completed on 2026-07-30, including one-time administrator
+bootstrap, username/password login, database-backed session revocation,
+protected server operations, and explicitly owned preferences. Docker startup
+and persistent-volume restart behavior were verified on 2026-07-30. Phase 2's
+canonical model and read-only Sleeper vertical slice were completed and
+real-league validated on 2026-07-30. Phase 3 has not started.
 
 See the [root README](../README.md) for prerequisites, setup, commands,
 environment configuration, migrations, Docker Compose, and testing.

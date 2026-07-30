@@ -22,9 +22,13 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {
+      BETTER_AUTH_SECRET:
+        process.env.BETTER_AUTH_SECRET ??
+        "e2e-only-secret-at-least-32-characters",
+      BETTER_AUTH_URL: "http://127.0.0.1:3000",
       DATABASE_URL:
         process.env.DATABASE_URL ??
-        "postgresql://fantasy_master:test@127.0.0.1:5432/fantasy_master",
+        "postgresql://fantasy_master:test@127.0.0.1:5432/fantasy_master_test",
       LOG_LEVEL: "silent",
     },
   },

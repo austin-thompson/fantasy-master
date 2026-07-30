@@ -11,15 +11,19 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: databaseUrl }),
 });
 
-try {
-  await prisma.systemMetadata.upsert({
-    where: { key: "foundation-version" },
-    update: { value: "phase-0b" },
-    create: {
-      key: "foundation-version",
-      value: "phase-0b",
-    },
-  });
-} finally {
-  await prisma.$disconnect();
+async function main() {
+  try {
+    await prisma.systemMetadata.upsert({
+      where: { key: "foundation-version" },
+      update: { value: "phase-0b" },
+      create: {
+        key: "foundation-version",
+        value: "phase-0b",
+      },
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
 }
+
+void main();

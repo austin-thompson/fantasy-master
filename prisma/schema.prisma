@@ -7,6 +7,434 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id              String           @id
+  name            String
+  email           String           @unique
+  emailVerified   Boolean          @default(false)
+  image           String?
+  username        String?          @unique
+  displayUsername String?
+  bootstrapOwner  Boolean?         @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  preferences     UserPreference[]
+  providerConnections ProviderConnection[]
+  leagues              League[]
+  fantasyTeams         FantasyTeam[]
+  rosters              Roster[]
+  matchups             Matchup[]
+  syncRuns             SyncRun[]
+  syncErrors           SyncError[]
+  rawProviderSnapshots RawProviderSnapshot[]
+
+  @@map("user")
+}
+
+enum Provider {
+  SLEEPER
+  YAHOO
+  ESPN
+}
+
+enum ProviderConnectionStatus {
+  ACTIVE
+  ERROR
+  DISCONNECTED
+}
+
+enum SyncRunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum RawSnapshotKind {
+  ACCOUNT
+  LEAGUES
+  LEAGUE
+  USERS
+  ROSTERS
+  MATCHUPS
+  TRANSACTIONS
+  PLAYERS
+}
+
+model ProviderConnection {
+  id                String                   @id @default(uuid())
+  userId            String
+  provider          Provider
+  externalAccountId String
+  displayName       String
+  status            ProviderConnectionStatus @default(ACTIVE)
+  configuration     Json
+  lastSuccessfulSyncAt DateTime?
+  lastAttemptedSyncAt  DateTime?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  user              User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leagues           League[]
+  syncRuns          SyncRun[]
+  rawSnapshots      RawProviderSnapshot[]
+
+  @@unique([userId, provider, externalAccountId])
+  @@index([userId, provider])
+  @@map("provider_connection")
+}
+
+model League {
+  id                   String   @id @default(uuid())
+  userId               String
+  providerConnectionId String
+  provider             Provider
+  externalId           String
+  name                 String
+  sport                String
+  season               Int
+  seasonType           String?
+  status               String
+  totalRosters         Int?
+  avatarUrl            String?
+  sourceUpdatedAt      DateTime?
+  ingestedAt           DateTime @default(now())
+  lastSuccessfulSyncId String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerConnection   ProviderConnection @relation(fields: [providerConnectionId], references: [id], onDelete: Cascade)
+  settings             LeagueSettings?
+  fantasyTeams         FantasyTeam[]
+  rosters              Roster[]
+  matchups             Matchup[]
+  transactions         FantasyTransaction[]
+
+  @@unique([userId, provider, externalId])
+  @@index([userId, season])
+  @@index([providerConnectionId])
+  @@map("league")
+}
+
+model LeagueSettings {
+  id                     String   @id @default(uuid())
+  leagueId               String   @unique
+  scoringType            String
+  rosterPositions        Json
+  scoringSettings        Json
+  providerSettings       Json
+  waiverType             String?
+  waiverBudget           Int?
+  playoffWeekStart       Int?
+  keeperOrDynasty        Boolean?
+  unsupportedFields      Json
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  league                 League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+
+  @@map("league_settings")
+}
+
+model FantasyTeam {
+  id                String   @id @default(uuid())
+  userId            String
+  leagueId          String
+  provider           Provider
+  externalId        String
+  externalOwnerId   String?
+  name              String
+  avatarUrl         String?
+  isUserTeam        Boolean  @default(false)
+  sourceUpdatedAt   DateTime?
+  ingestedAt        DateTime @default(now())
+  lastSuccessfulSyncId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  league            League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  roster            Roster?
+
+  @@unique([leagueId, externalId])
+  @@index([userId])
+  @@map("fantasy_team")
+}
+
+model Roster {
+  id                String   @id @default(uuid())
+  userId            String
+  leagueId          String
+  fantasyTeamId     String   @unique
+  provider          Provider
+  externalId        String
+  wins              Int?
+  losses            Int?
+  ties              Int?
+  pointsFor         Float?
+  waiverPosition    Int?
+  waiverBudgetUsed  Int?
+  sourceUpdatedAt   DateTime?
+  ingestedAt        DateTime @default(now())
+  lastSuccessfulSyncId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  league            League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  fantasyTeam       FantasyTeam @relation(fields: [fantasyTeamId], references: [id], onDelete: Cascade)
+  slots             RosterSlot[]
+  matchupEntries    MatchupEntry[]
+  transactionEntries FantasyTransactionRoster[]
+
+  @@unique([leagueId, externalId])
+  @@index([userId])
+  @@map("roster")
+}
+
+model RosterSlot {
+  id          String   @id @default(uuid())
+  rosterId    String
+  playerId    String
+  slotType    String
+  slotIndex   Int
+  isStarter   Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  roster      Roster   @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Restrict)
+
+  @@unique([rosterId, playerId])
+  @@index([playerId])
+  @@map("roster_slot")
+}
+
+model Matchup {
+  id                String   @id @default(uuid())
+  userId            String
+  leagueId          String
+  provider          Provider
+  externalId        String
+  week              Int
+  status            String
+  sourceUpdatedAt   DateTime?
+  ingestedAt        DateTime @default(now())
+  lastSuccessfulSyncId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  league            League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  entries           MatchupEntry[]
+
+  @@unique([leagueId, week, externalId])
+  @@index([userId, week])
+  @@map("matchup")
+}
+
+model MatchupEntry {
+  id          String   @id @default(uuid())
+  matchupId   String
+  rosterId    String
+  points      Float?
+  customPoints Float?
+  starters    Json
+  players     Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  matchup     Matchup  @relation(fields: [matchupId], references: [id], onDelete: Cascade)
+  roster      Roster   @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+
+  @@unique([matchupId, rosterId])
+  @@map("matchup_entry")
+}
+
+model Player {
+  id               String   @id @default(uuid())
+  sport            String
+  firstName        String?
+  lastName         String?
+  fullName         String
+  position         String?
+  team             String?
+  status           String?
+  injuryStatus     String?
+  metadata         Json
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  externalIds      PlayerExternalId[]
+  rosterSlots      RosterSlot[]
+
+  @@index([sport, fullName])
+  @@map("player")
+}
+
+model PlayerExternalId {
+  id         String   @id @default(uuid())
+  playerId   String
+  provider   Provider
+  externalId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId])
+  @@index([playerId])
+  @@map("player_external_id")
+}
+
+model FantasyTransaction {
+  id                String   @id @default(uuid())
+  leagueId          String
+  provider          Provider
+  externalId        String
+  week              Int
+  type              String
+  status            String
+  occurredAt        DateTime?
+  adds              Json
+  drops             Json
+  details           Json
+  sourceUpdatedAt   DateTime?
+  ingestedAt        DateTime @default(now())
+  lastSuccessfulSyncId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  league            League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  rosters           FantasyTransactionRoster[]
+
+  @@unique([leagueId, externalId])
+  @@map("fantasy_transaction")
+}
+
+model FantasyTransactionRoster {
+  transactionId String
+  rosterId      String
+  transaction   FantasyTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  roster        Roster              @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, rosterId])
+  @@map("fantasy_transaction_roster")
+}
+
+model SyncRun {
+  id                   String        @id @default(uuid())
+  userId               String
+  providerConnectionId String
+  status               SyncRunStatus @default(RUNNING)
+  startedAt            DateTime      @default(now())
+  finishedAt           DateTime?
+  importedCounts       Json
+  warnings             Json
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerConnection   ProviderConnection @relation(fields: [providerConnectionId], references: [id], onDelete: Cascade)
+  errors               SyncError[]
+
+  @@index([userId, startedAt])
+  @@index([providerConnectionId, startedAt])
+  @@map("sync_run")
+}
+
+model SyncError {
+  id          String   @id @default(uuid())
+  userId      String
+  syncRunId   String
+  category    String
+  message     String
+  retryable   Boolean
+  details     Json
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  syncRun     SyncRun  @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("sync_error")
+}
+
+model RawProviderSnapshot {
+  id                   String          @id @default(uuid())
+  userId               String
+  providerConnectionId String
+  syncRunId            String
+  provider             Provider
+  kind                 RawSnapshotKind
+  externalResourceId   String
+  payload              Json
+  capturedAt           DateTime        @default(now())
+  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerConnection   ProviderConnection @relation(fields: [providerConnectionId], references: [id], onDelete: Cascade)
+
+  @@index([providerConnectionId, kind, capturedAt])
+  @@index([syncRunId])
+  @@map("raw_provider_snapshot")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String   @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rateLimit")
+}
+
+model UserPreference {
+  id        String   @id @default(uuid())
+  userId    String
+  key       String
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([userId])
+  @@map("user_preference")
+}
+
 model SystemMetadata {
   key       String   @id
   value     String
